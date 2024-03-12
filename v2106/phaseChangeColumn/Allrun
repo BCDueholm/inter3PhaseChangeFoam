@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Run from this directory
+cd ${0%/*} || exit 1
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+#run both allrun scripts in the below folders
+./cavitation/1x640/Allrun
+./condensation/1x640/Allrun
+#------------------------------------------------------------------------------
+

@@ -1,0 +1,65 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+ =========                |
+ \      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+  \    /   O peration     | Website:  https://openfoam.org
+   \  /    A nd           | Version:  9                                   
+    \/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version         2;
+    format          ascii;
+    class           dictionary;
+    object          setInitP;
+    version     2.0;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type            coded;
+libs            ("libutilityFunctionObjects.so");
+
+name            setInitP;
+
+codeWrite
+#{
+    const uniformDimensionedVectorField& g = mesh().lookupObject<uniformDimensionedVectorField>("g");
+    const volScalarField& rhoM = mesh().lookupObject<volScalarField>("rho");
+    const volScalarField& gh = mesh().lookupObject<volScalarField>("gh");
+    const volVectorField& cell = mesh().C();
+    const volScalarField cellsf = cell.component(1);
+    
+    const volScalarField& p_rgh
+    (
+        mesh().lookupObject<volScalarField>("p_rgh")
+    );
+    
+    volScalarField href
+    (
+        IOobject
+        (
+            "href",
+            mesh().time().timeName(),
+            mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh(),dimensionedScalar("href", dimLength, 2.0)
+    );
+    
+    volScalarField p
+    (
+        IOobject
+        (
+            "p",
+            mesh().time().timeName(),
+            mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        p_rgh + rhoM*g.component(1)*(cellsf-href)
+    );
+    
+    p.write();
+#};
+
+// ************************************************************************* //

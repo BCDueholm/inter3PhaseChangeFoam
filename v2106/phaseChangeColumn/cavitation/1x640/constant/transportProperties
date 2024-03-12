@@ -1,0 +1,64 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2106                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      transportProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases (liquid vapour air);
+
+phaseChangeThreePhaseMixture SchnerrSauer3;
+
+// phaseChangeTwoPhaseMixture SchnerrSauer;
+
+pSat        100300;//100300;//2178;2300 ///taken from https://www.ski-gmbh.com/swa/tools/steam  using 101325 Pa and 18.85 celsius
+
+liquid
+{
+    transportModel  Newtonian;  //taken from https://www.ski-gmbh.com/swa/tools/steam  using 101325 Pa and 18.85 celsius
+    nu         0.01;//1.032e-6;
+    rho        1000;//998.436;       
+}
+
+vapour
+{
+    transportModel  Newtonian; //taken from https://www.ski-gmbh.com/swa/tools/steam  using 2177 Pa and 18.85 celsius
+    nu         0.1;//5.879e-4;
+    rho        1;//0.016;       
+}
+
+air
+{
+    transportModel  Newtonian; //taken from https://www.egichem.com/tools/calculators/air-properties/ at 18.85 Celsius
+    nu         0.1;//1.50084e-5;
+    rho        1;//1.2095;           
+}
+
+
+SchnerrSauer3Coeffs
+{
+    n               1e+8;
+    dNuc            1e-6;
+    Cc              0;
+    Cv              1;
+}
+
+
+// sigma           1.96;
+// Surface tension coefficients
+sigma12         1.96;//3529582;  //from paper in mendeley
+sigma13         1.96; //29125; //Water against Air //taken from http://www.iapws.org/relguide/Surf-H2O-2014.pdf interpolated to 18.85 celcius  
+
+//used for setting the initial pressure with interFoam
+sigma 1.96;
+// ************************************************************************* //

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Run from this directory
+cd ${0%/*} || exit 1
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# create mesh
+runApplication blockMesh
+
+# mapping latest time cavitation test case
+runApplication mapFields ../../cavitation/1x640/ -consistent -sourceTime latestTime
+
+rm -rf results
+
+runApplication $(getApplication)
+
+# #For plotting (tested using python 3.8)
+# python3 createGraphs.py
+# For plotting tested using gnuplot 5.2 patchlevel 6
+./createGraphs
+#------------------------------------------------------------------------------
+

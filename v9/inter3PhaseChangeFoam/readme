@@ -1,0 +1,10 @@
+This is the solver. It consists of a library linked together in phaseChnageThreePhaseMixtures.
+The library folders are:
+    incompressibleThreePhaseMixture
+    ThreePhaseInterfaceProperties
+    phaseChangeThreePhaseMixtures
+    
+To compile first source OpenFoam V9 and then execure Allwmake. This compiles the library and afterwards the solver using wmake.
+Allwclean can be used to clean the compilation files. The compilation has only been tested on linux based systems debian 10 and the LUMI supercomputer. Issues might arise if the code is compiled on linux subsystems for windows.
+
+The solver is called inter3PhaseChangeFoam and is executed as such.

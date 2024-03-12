@@ -1,0 +1,17 @@
+The case is split into two parts a cavitation part and a condensation part.
+First the cavitation part is solved and the solution is used for the condensation part.
+
+Most of post processing is handled by a coded function object locaded in controlDict, which writes the results to a file called "results".
+
+The plotting of the results can either be done using a python script requireing numpy and matplotlib or with gnuplot. The plotting scripts have been tested in python3.8, and gnuplot 5.2 patchlevel 6. By default gnuplot is used. Edit the Allrun script in the cases to change.
+
+Before running the Allrun or Allclean, have OpenFOAM v2106 sourced.
+
+Results and plots are located in ./cavitation/1x640/ and ./condensation/1x640/ after Allrun have been executed
+
+This version of the test case uses 12 outer correctors. When using residualContol the solution does not converge to the same one as v9, however when forced to make 12 outer corrections the solutions are the same.
+
+The benchmark case was first proposed by:
+F. Giussani, F. Piscaglia, G. Saez-Mischlich, and J. H`elie, “A three-phase VOF solver for the simulation of in-nozzle
+cavitation effects on liquid atomization,” Journal of Computational Physics, vol. 406, p. 109068, 2020. [Online].
+Available: https://doi.org/10.1016/j.jcp.2019.109068

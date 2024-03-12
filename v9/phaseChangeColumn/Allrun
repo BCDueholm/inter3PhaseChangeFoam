@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Run from this directory
+cd ${0%/*} || exit 1
+
+#run both allrun scripts in the below folders
+./cavitation/1x640/Allrun
+./condensation/1x640/Allrun
+#------------------------------------------------------------------------------
+

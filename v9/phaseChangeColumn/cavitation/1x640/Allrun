@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Run from this directory
+cd ${0%/*} || exit 1
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# Preprocessing
+cp -r 0.orig 0
+runApplication blockMesh 
+runApplication renumberMesh -constant -overwrite
+runApplication setFields 
+runApplication interFoam -postProcess -func setInitP
+
+# #remove in case it has not been deleted
+rm -rf results
+
+#run the case
+runApplication $(getApplication)
+
+# #For plotting (tested using python 3.8)
+# python3 cateGraphs.py
+# For plotting tested using gnuplot 5.2 patchlevel 6
+./createGraphs
+#------------------------------------------------------------------------------
+

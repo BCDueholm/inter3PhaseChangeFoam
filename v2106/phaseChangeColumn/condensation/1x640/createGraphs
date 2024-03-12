@@ -1,0 +1,122 @@
+#!/bin/sh
+
+if ! command -v gnuplot > /dev/null 2>&1; then
+    echo 'gnuplot not found - skipping graph creation' >&2
+    exit 1
+fi
+
+# resi_cell_vol=$(echo "1/(0.1 * 0.1 * (2 / 640))")
+# domain_vol=$(echo "0.1 * 0.1 * 2")
+# rho_l=1000
+
+gnuplot <<-EOF
+    
+    set terminal png size 1200,900
+    set output 'averageSumOfAlphas.png'
+    set yrange[0:2]
+    set xlabel 'Time [s]'
+    set ylabel 'Average sum of void fractions [-]'
+
+    plot "results" using 1:9 t "Sum of alphas"
+    
+    
+    set output 'volumeAveragedAlphas.png'
+    set yrange [0:1]
+    set xlabel 'Time [s]'
+    set ylabel 'Volume averaged void fractions [-]'
+    
+    plot "results" using 1:10 t "alphaL", "results" using 1:11 t "alphaV", "results" using 1:12 t "alphaNC"
+    
+    
+    set output 'massOfLiquid.png'
+    set yrange [9.49:9.5]
+    set xlabel 'Time [s]'
+    set ylabel 'Mass of liquid [-]'
+    
+    plot "results" u 1:2 t "Liquid"
+    
+    
+    set output 'massOfVapour.png'
+    set yrange [0:1e-2]
+    set xlabel 'Time [s]'
+    set ylabel 'Mass of vapour [-]'
+    
+    plot "results" u 1:3 t "Vapour"
+    
+    
+    set output 'massOfAir.png'
+    set yrange [0:1e-2]
+    set xlabel 'Time [s]'
+    set ylabel 'Mass of air [-]'
+    
+    plot "results" u 1:4 t "Air"
+    
+    
+    set output 'surfaceHeightLV.png'
+    set yrange [0.9:1]
+    set xlabel 'Time [s]'
+    set ylabel 'Liquid/vapour surface height [m]'
+    
+    plot "results" u 1:5 t "Liquid/vapour"
+    
+    
+    set output 'surfaceHeightVNC.png'
+    set yrange [1:1.8]
+    set xlabel 'Time [s]'
+    set ylabel 'Vapour/air surface height [m]'
+    
+    plot "results" u 1:6 t "Vapour/Air"
+    
+    
+    set output 'surfaceVelocityLV.png'
+    set yrange [-2.25:0]
+    set xlabel 'Time [s]'
+    set ylabel 'Liquid/vapour interface velocity [m/s]'
+    
+    plot "results" u 1:7 t "Liquid/vapour"
+    
+    
+    set output 'surfaceVelocityVNC.png'
+    set yrange [-12:0]
+    set xlabel 'Time [s]'
+    set ylabel 'Vapour/air interface velocity [m/s]'
+    
+    plot "results" u 1:8 t "Vapour/air"
+    
+    reset session
+    
+    stats "results" using (\$2) nooutput
+    col_length = STATS_records
+
+    array shifted_mass1[col_length]
+    array shifted_mass2[col_length]
+
+    array orig_mass1[col_length]
+    array orig_mass2[col_length]
+
+    do for [i=2:col_length-1] {
+        stats "results" u (\$2) every ::i::i nooutput
+        shifted_mass1[i-1] = STATS_min
+        stats "results" u (\$3) every ::i::i nooutput
+        shifted_mass2[i-1] = STATS_min
+    }
+
+    do for [i=1:col_length-1] {
+        stats "results" u (\$2) every ::i::i nooutput
+        orig_mass1[i] = STATS_min
+        stats "results" u (\$3) every ::i::i nooutput
+        orig_mass2[i] = STATS_min
+    }
+
+    set terminal png size 1200,900
+    set output 'timeStepError.png'
+    set xlabel 'Time [s]'
+    set ylabel 'Error (%)'
+    set yrange[0:1e-4]
+
+    plot for [i=1:col_length-2] "results" using (\$1):((abs((shifted_mass1[i]-orig_mass1[i])-(shifted_mass2[i]-orig_mass2[i]))/orig_mass1[1])*100) every ::i::i ls 1 notitle 
+
+EOF
+
+
+#------------------------------------------------------------------------------

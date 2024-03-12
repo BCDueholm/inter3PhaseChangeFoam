@@ -1,0 +1,201 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+ =========                |
+ \      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+  \    /   O peration     | Website:  https://openfoam.org
+   \  /    A nd           | Version:  dev                                   
+    \/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     inter3PhaseChangeFoam;
+
+startFrom       latestTime;
+
+startTime       0;
+
+endTime         0.1;
+
+deltaT          1e-4; 
+
+writeControl    adjustableRunTime;
+
+writeInterval   1e-3;
+ 
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  8;
+
+writeCompression uncompressed;
+
+timeFormat       general;
+
+timePrecision    8;
+
+runTimeModifiable yes;
+
+adjustTimeStep  on;
+
+maxCo           0.1;
+
+maxAlphaCo      1;
+
+maxDeltaT       1e-04;
+
+boundedGauss on; //off
+
+writeOptionalEntries 1;
+
+libs
+(  
+    "libfieldFunctionObjects.so"
+    "libutilityFunctionObjects.so"
+);
+
+functions
+{            
+    processData
+    {
+        libs ("libutilityFunctionObjects.so");
+        type coded;
+        name resultCalc;
+        enabled yes;
+//         executeControl timeStep;
+//         executeInterval 100;
+//         writeControl    adjustableRunTime;
+//         writeInterval   1e-3;
+//         //writeControl timeStep;
+//         writeInterval 100;
+
+
+        codeExecute
+        #{
+
+        // Lookup/create variables
+        const volScalarField& alpha1 = mesh().lookupObject<volScalarField>("alpha.liquid");
+        const volScalarField& alpha2 = mesh().lookupObject<volScalarField>("alpha.vapour");
+        const volScalarField& alpha3 = mesh().lookupObject<volScalarField>("alpha.air");
+        const volVectorField& C = mesh().C();
+        const volVectorField& velocity = mesh().lookupObject<volVectorField>("U");
+        const scalarField& v = mesh().V();
+        
+        //set densities
+        const scalar rho1 = 1000;
+        const scalar rho2 = 1;
+        const scalar rho3 = 1;
+
+        //height of a single cell in the domain
+        const scalar cellHight = 2.0/640.0;
+        
+        //initialisation of variables
+        scalar mass1 (0.0);
+        scalar mass2 (0.0);
+        scalar mass3 (0.0);
+        
+        scalar surfLV (0.0);
+        scalar den1 (0.0);
+        scalar num1 (0.0);
+
+        scalar surfVA (0.0);
+        scalar den2 (0.0);
+        scalar num2 (0.0);
+        
+        scalar surfVelLV (0.0);
+        scalar num3 (0.0);
+        
+        scalar surfVelVA (0.0);
+        scalar num4 (0.0);
+
+        scalar surfVelVA2 (0.0);
+        scalar num5 (0.0);
+        scalar den3 (0.0);
+        
+        scalar alpha_sum (0.0);
+        scalar domainVol (0.0);
+        scalar alphaL (0.0);
+        scalar alphaV (0.0);
+        scalar alphaNC (0.0);
+        
+        //loop over all cells 
+        forAll(C,celli)
+        {
+            //calculate mass of each phase
+            mass1 += alpha1[celli]*rho1*v[celli];
+            mass2 += alpha2[celli]*rho2*v[celli];
+            mass3 += alpha3[celli]*rho3*v[celli];
+            
+            //calculate interface height of liquid/vapour
+            num1 += C[celli].component(1)*alpha1[celli]*(1.0-alpha1[celli])*v[celli];
+            den1 += alpha1[celli]*(1.0-alpha1[celli])*v[celli];
+            
+            //calculate interface height of vapour/air
+            num2 += C[celli].component(1)*alpha3[celli]*(1.0-alpha3[celli])*v[celli];
+            den2 += alpha3[celli]*(1.0-alpha3[celli])*v[celli];
+            
+            //calculate the interface velocity
+            num3 += velocity[celli].component(1)*alpha1[celli]*(1.0-alpha1[celli])*v[celli];
+            num4 += velocity[celli].component(1)*alpha3[celli]*(1.0-alpha3[celli])*v[celli];
+            
+            
+            num5 += velocity[celli].component(1)*alpha2[celli]*(1.0-alpha2[celli])*v[celli];
+            den3 += alpha2[celli]*(1.0-alpha2[celli])*v[celli];
+            
+            //calculate sum of alphas and domain volume
+            alpha_sum = alpha1[celli]+alpha2[celli]+alpha3[celli];
+            domainVol += v[celli];
+        }
+        
+        //sum the scalars over the processors
+        reduce(mass1, sumOp<scalar>());
+        reduce(mass2, sumOp<scalar>());
+        reduce(mass3, sumOp<scalar>());
+        
+        reduce(num1, sumOp<scalar>());
+        reduce(den1, sumOp<scalar>());
+        
+        reduce(num2, sumOp<scalar>());
+        reduce(den2, sumOp<scalar>());
+        
+        reduce(num3, sumOp<scalar>());
+        reduce(num4, sumOp<scalar>());
+        
+        reduce(den3, sumOp<scalar>());
+        reduce(num5, sumOp<scalar>());
+        
+        reduce(alpha_sum, sumOp<scalar>());
+        reduce(domainVol, sumOp<scalar>());
+        
+        //make the devision and avoid floating point error´
+        surfLV = num1/(den1 + SMALL);
+        surfVA = num2/(den2 + SMALL);
+        surfVelLV = num3/(den1 + SMALL);
+        surfVelVA = num4/(den2 + SMALL);
+        surfVelVA2 = num5/(den3 + SMALL);
+        
+        alphaL = (mass1/rho1)/domainVol;
+        alphaV = mass2/domainVol;
+        alphaNC = mass3/domainVol;
+        // Write data
+        if (Pstream::myProcNo() == 0)
+        {
+            std::ofstream out;
+            out.precision(8);
+            out.open("results", std::ios::app);
+            out <<  mesh().time().timeName() << " " << mass1 << " " << mass2 << " " << mass3 << " " << surfLV
+            << " "<< surfVA << " " << surfVelLV << " " << surfVelVA <<" " <<  alpha_sum <<
+            " " <<  alphaL <<" " <<  alphaV <<" " <<  alphaNC <<"\r\n";
+        }
+        
+        #};
+    }
+}
+
+// ************************************************************************* //
