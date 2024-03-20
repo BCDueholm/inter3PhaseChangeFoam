@@ -211,7 +211,7 @@
             
             
             volScalarField Sp1 = vDotvmcAlphal;
-            volScalarField Su1 = vDotcAlphal*(scalar(1)-alpha3) + divU*min(alpha1, scalar(1));
+            volScalarField Su1(vDotcAlphal*(scalar(1)-alpha3) + divU*min(alpha1, scalar(1)));
             
             MULES::explicitSolve
             (

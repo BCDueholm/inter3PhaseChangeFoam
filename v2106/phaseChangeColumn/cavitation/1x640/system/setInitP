@@ -25,7 +25,7 @@ codeWrite
     const uniformDimensionedVectorField& g = mesh().time().lookupObject<uniformDimensionedVectorField>("g");
     const volScalarField& rhoM = mesh().lookupObject<volScalarField>("rho");
     const volVectorField& cell = mesh().C();
-    const volScalarField cellsf = cell.component(1);
+    const volScalarField cellsf(cell.component(1));
     
     const volScalarField& p_rgh
     (

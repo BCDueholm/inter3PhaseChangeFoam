@@ -5,6 +5,6 @@ The library folders are:
     phaseChangeThreePhaseMixtures
     
 To compile first source OpenFoam V2106 and then execure Allwmake. This compiles the library and afterwards the solver using wmake.
-Allwclean can be used to clean the compilation files. The compilation has only been tested on linux based systems debian 10. Issues might arise if the code is compiled on lunix subsystems for windows.
+Allwclean can be used to clean the compilation files. The compilation has only been tested on linux based systems debian 10 and the LUMI supercomputer.
 
 The solver is called inter3PhaseChangeFoam and is executed as such.
